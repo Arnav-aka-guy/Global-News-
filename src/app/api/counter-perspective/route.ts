@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCounterPerspective } from '@/lib/gemini';
+import { getTrendingInsights } from '@/lib/gemini';
 import { getMockCounterPerspective } from '@/lib/mock-data';
 
 export async function POST(request: NextRequest) {
