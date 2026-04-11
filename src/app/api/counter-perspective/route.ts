@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrendingInsights } from '@/lib/gemini';
-import { getMockCounterPerspective } from '@/lib/mock-data';
+import { analyzeArticles } from '@/lib/gemini';
+import { getMockArticles } from '@/lib/mock-data';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,19 +12,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Try AI analysis
-    const perspective = await getCounterPerspective(
-      articleTitle,
-      articleSummary || '',
-      sourceCountry || 'Unknown'
-    );
+    const perspective = await analyzeArticles([
+      { title: articleTitle, description: articleSummary || '', content: '', source: { name: sourceCountry || 'Unknown' } }
+    ]);
 
-    if (perspective.region !== 'N/A' && perspective.region !== 'Error') {
-      return NextResponse.json({ ...perspective, aiPowered: true });
+    if (perspective && perspective.length > 0) {
+      return NextResponse.json({ ...perspective[0], aiPowered: true });
     }
 
     // Fallback to mock
-    const mock = getMockCounterPerspective();
-    return NextResponse.json({ ...mock, aiPowered: false });
+    const mock = getMockArticles(sourceCountry || 'Unknown');
+    return NextResponse.json({ ...mock[0], aiPowered: false });
   } catch (error) {
     console.error('Counter-perspective API error:', error);
     return NextResponse.json({ error: 'Counter-perspective analysis failed' }, { status: 500 });

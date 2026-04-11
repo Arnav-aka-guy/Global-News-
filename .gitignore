@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Explicit ignores from instructions
+node_modules/
+.next/
+.env
+.env.local
