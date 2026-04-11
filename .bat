@@ -1,2 +1,2 @@
-cd C:\Users\MAYAN\Desktop\Testing\aegis-dashboard
+cd d:\ailab\aegis-dashboard
 npm run dev
