@@ -3,8 +3,8 @@
  * Run: node scripts/test-apis.mjs
  */
 
-const NEWS_KEY  = '<YOUR_NEWS_API_KEY>';
-const GROQ_KEY  = '<YOUR_GROQ_API_KEY>';
+const NEWS_KEY  = process.env.NEWS_API_KEY || '<YOUR_NEWS_API_KEY>';
+const GROQ_KEY  = process.env.GROQ_API_KEY || '<YOUR_GROQ_API_KEY>';
 
 console.log('\n╔══════════════════════════════════════════════╗');
 console.log('║        AEGIS API Diagnostic Tool             ║');
