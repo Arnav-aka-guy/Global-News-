@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
           },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
-            temperature: 0.7,
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
             max_tokens: 600,
             messages: [
               {

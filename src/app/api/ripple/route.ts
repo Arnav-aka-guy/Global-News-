@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrendingInsights } from '@/lib/gemini';
+import { getRippleEffects } from '@/lib/gemini';
 import { getMockArticles } from '@/lib/mock-data';
 import { COUNTRIES } from '@/data/countries';
 
@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     const countryName = COUNTRIES[country as keyof typeof COUNTRIES]?.name || country;
 
     // Try AI analysis
-    const aiEffects = await getTrendingInsights(
-      [{ title: articleTitle, description: articleSummary || '', source: { name: countryName } }],
+    const aiEffects = await getRippleEffects(
+      { title: articleTitle, description: articleSummary || '' },
       countryName
     );
 
@@ -35,11 +35,40 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fallback to mock
-    const mock = getMockArticles(country);
+    // Fallback to mock ripple effects
+    const mockRippleEffects = [
+      {
+        code: 'CN',
+        countryName: 'China',
+        impact_score: 85,
+        impact_type: 'Supply Chain',
+        summary: `Supply chains in China may experience disruption due to related decisions in ${countryName}.`,
+        lat: COUNTRIES['CN']?.lat || 0,
+        lng: COUNTRIES['CN']?.lng || 0
+      },
+      {
+        code: 'DE',
+        countryName: 'Germany',
+        impact_score: 60,
+        impact_type: 'Economic',
+        summary: `Markets in Germany could react to the changing economic climate from this incident.`,
+        lat: COUNTRIES['DE']?.lat || 0,
+        lng: COUNTRIES['DE']?.lng || 0
+      },
+      {
+        code: 'IN',
+        countryName: 'India',
+        impact_score: 45,
+        impact_type: 'Diplomatic',
+        summary: `Diplomatic channels in India are observing the development closely.`,
+        lat: COUNTRIES['IN']?.lat || 0,
+        lng: COUNTRIES['IN']?.lng || 0
+      }
+    ];
+
     return NextResponse.json({
       sourceCountry: country,
-      affectedCountries: mock,
+      affectedCountries: mockRippleEffects,
       aiPowered: false,
     });
   } catch (error) {

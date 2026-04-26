@@ -185,3 +185,47 @@ Respond ONLY with a valid JSON array.`;
     return [];
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getRippleEffects — predict geopolitical ripple effects
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RippleEffect {
+  code: string;
+  countryName: string;
+  impact_score: number; // 0 to 100
+  impact_type: string; // e.g. "Supply Chain", "Diplomatic", "Economic"
+  summary: string;
+}
+
+export async function getRippleEffects(
+  article: { title: string; description: string },
+  sourceCountry: string
+): Promise<RippleEffect[]> {
+  if (!process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) return [];
+
+  const prompt = `Analyze this news article from ${sourceCountry} and predict its geopolitical ripple effects on other nations. Return the top 3 affected countries as a JSON array.
+
+Each object must have:
+- "code": ISO 3166-1 alpha-2 country code (e.g., "US", "CN", "DE")
+- "countryName": Full name of the affected country
+- "impact_score": integer 0-100 indicating severity of impact
+- "impact_type": Short category (e.g., "Supply Chain", "Diplomatic", "Economic", "Security")
+- "summary": One sentence explaining the predicted impact on this country
+
+Article Title: "${article.title}"
+Article Description: "${article.description || 'N/A'}"
+
+Respond ONLY with a valid JSON array.`;
+
+  try {
+    const text    = await generate(prompt, undefined, '[]');
+    const cleaned = text.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '').trim();
+    const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+  } catch (error) {
+    console.error('[ai] getRippleEffects error:', error);
+    return [];
+  }
+}
+

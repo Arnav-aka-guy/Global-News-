@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ExternalLink, ChevronDown, ChevronUp, Clock,
   FileText, CheckCircle2, AlertTriangle, ShieldOff,
-  Cpu
+  Cpu, Activity
 } from 'lucide-react';
 import { AnalyzedArticle } from '@/types';
 import TruthMeter from './TruthMeter';
@@ -21,6 +21,11 @@ export default function ArticleCard({ article, index, selectedCountry }: Article
   const [summaryData, setSummaryData]   = useState<{ summary: string; provider: string; model: string } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [showSummary, setShowSummary]   = useState(false);
+
+  // ─── Ripple state ────────────────────────────────────────────────────────
+  const [rippleData, setRippleData]     = useState<any[] | null>(null);
+  const [loadingRipple, setLoadingRipple] = useState(false);
+  const [showRipple, setShowRipple]     = useState(false);
 
   // ─── Veracity helpers ────────────────────────────────────────────────────
   const getVeracityConfig = (v?: string) => {
@@ -102,6 +107,34 @@ export default function ArticleCard({ article, index, selectedCountry }: Article
       });
     } finally {
       setLoadingSummary(false);
+    }
+  };
+
+  // ─── Ripple FX (on-demand Geopolitical impact prediction) ────────────────
+  const fetchRipple = async () => {
+    if (rippleData) { setShowRipple(!showRipple); return; }
+
+    setLoadingRipple(true);
+    setShowRipple(true);
+    try {
+      const res = await fetch('/api/ripple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          country: selectedCountry,
+          articleTitle: article.title,
+          articleSummary: article.summary || article.description,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setRippleData(data.affectedCountries || []);
+    } catch {
+      setRippleData([
+        { code: 'ERR', countryName: 'Analysis Failed', summary: 'Failed to generate ripple effects. Please try again later.', impact_score: 0, impact_type: 'Error' }
+      ]);
+    } finally {
+      setLoadingRipple(false);
     }
   };
 
@@ -218,6 +251,25 @@ export default function ArticleCard({ article, index, selectedCountry }: Article
               )}
               <span className="hidden sm:inline">
                 {loadingSummary ? 'Summarizing...' : summaryData ? 'Summarized' : 'Summarizar'}
+              </span>
+            </button>
+
+            {/* Ripple FX */}
+            <button
+              onClick={fetchRipple}
+              disabled={loadingRipple}
+              className={`btn-cyber flex items-center gap-1.5 text-[0.65rem] ${
+                rippleData ? 'text-amber-400 border-amber-400/40 bg-amber-400/10' : ''
+              }`}
+              title="Predict Geopolitical Ripple Effects"
+            >
+              {loadingRipple ? (
+                <span className="w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Activity className="w-3 h-3" />
+              )}
+              <span className="hidden sm:inline">
+                {loadingRipple ? 'Analyzing...' : 'Ripple FX'}
               </span>
             </button>
           </div>
@@ -340,6 +392,87 @@ export default function ArticleCard({ article, index, selectedCountry }: Article
                       </button>
                       <span className="text-[0.55rem] font-mono text-violet-400/50 uppercase tracking-widest bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/10">
                         {summaryData.provider === 'Groq' ? '⚡ Groq · Llama 3.3 70B' : summaryData.model}
+                      </span>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Ripple Effects panel ──────────────────────────────────────── */}
+        <AnimatePresence>
+          {showRipple && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 p-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20">
+                {loadingRipple ? (
+                  <div className="flex items-center gap-2.5 text-xs text-amber-500/60 py-1">
+                    <div className="flex gap-1">
+                      {[0, 150, 300].map((d) => (
+                        <span
+                          key={d}
+                          className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce"
+                          style={{ animationDelay: `${d}ms` }}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-mono tracking-wider text-[0.65rem]">
+                      Calculating Geopolitical Ripple Effects...
+                    </span>
+                  </div>
+                ) : rippleData ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-[0.62rem] font-bold text-amber-500 tracking-widest uppercase">
+                        Predicted Ripple Effects
+                      </span>
+                    </div>
+                    <div className="space-y-3 mb-2.5 mt-2">
+                      {rippleData.map((effect, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <div className="shrink-0 flex flex-col items-center gap-1">
+                            <span className="text-[0.6rem] font-mono tracking-wider px-1 bg-amber-500/10 border border-amber-500/20 rounded text-amber-400 uppercase">
+                              {effect.code}
+                            </span>
+                            {effect.impact_score > 0 && (
+                              <span className="text-[0.5rem] font-mono text-amber-500/70">
+                                {effect.impact_score}/100
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-xs font-semibold text-slate-200">
+                                {effect.countryName}
+                              </span>
+                              <span className="text-[0.55rem] font-mono text-amber-500/80 px-1 py-0.5 rounded bg-amber-500/5">
+                                {effect.impact_type}
+                              </span>
+                            </div>
+                            <p className="text-[0.65rem] text-slate-400 leading-relaxed">
+                              {effect.summary}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => setShowRipple(false)}
+                        className="text-[0.55rem] font-mono text-slate-600 hover:text-slate-400 transition-colors"
+                      >
+                        ✕ dismiss
+                      </button>
+                      <span className="text-[0.55rem] font-mono text-amber-500/50 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/10">
+                        ⚡ Groq · Llama 3.3 70B
                       </span>
                     </div>
                   </>
